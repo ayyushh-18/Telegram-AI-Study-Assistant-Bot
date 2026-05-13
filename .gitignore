@@ -1,0 +1,5 @@
+.venv/
+.env
+__pycache__/
+history.db
+uploaded_notes.pdf
