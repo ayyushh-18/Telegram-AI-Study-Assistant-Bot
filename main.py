@@ -65,12 +65,14 @@ client = Groq(api_key=GROQ_API_KEY)
 
 
 # =========================================
-# TELEGRAM APP
+# TELEGRAM APPLICATION
 # =========================================
 
-telegram_app = Application.builder().token(
-    BOT_TOKEN
-).build()
+telegram_app = (
+    Application.builder()
+    .token(BOT_TOKEN)
+    .build()
+)
 
 
 # =========================================
@@ -103,43 +105,52 @@ def clean_text(text):
 
 def generate_ai_response(prompt):
 
-    response = client.chat.completions.create(
+    try:
 
-        model="llama-3.3-70b-versatile",
+        response = client.chat.completions.create(
 
-        messages=[
+            model="llama-3.3-70b-versatile",
 
-            {
-                "role": "system",
-                "content": """
+            messages=[
+
+                {
+                    "role": "system",
+                    "content": """
 You are an advanced AI Study Assistant.
 
 Rules:
-- Telegram friendly formatting
-- No markdown stars
-- Easy explanations
-- Use bullets
-- Use emojis naturally
 - Beginner friendly
 - Educational tone
+- Telegram friendly formatting
+- Use bullets
+- No markdown stars
+- Short paragraphs
+- Explain clearly
 """
-            },
+                },
 
-            {
-                "role": "user",
-                "content": prompt
-            }
+                {
+                    "role": "user",
+                    "content": prompt
+                }
 
-        ],
+            ],
 
-        temperature=0.7,
-        max_tokens=2500
+            temperature=0.7,
+            max_tokens=2000
 
-    )
+        )
 
-    text = response.choices[0].message.content
+        text = response.choices[0].message.content
 
-    return clean_text(text)
+        return clean_text(text)
+
+    except Exception as e:
+
+        logger.error(f"GROQ ERROR: {e}")
+        traceback.print_exc()
+
+        return "❌ AI service temporarily unavailable."
 
 
 # =========================================
@@ -160,7 +171,7 @@ async def send_reply(update, text):
 
 
 # =========================================
-# TYPING
+# TYPING EFFECT
 # =========================================
 
 async def typing_effect(update, context):
@@ -183,14 +194,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 📚 Available Commands:
 
 /ask <question>
+
 /summarize <notes>
+
 /quiz <topic>
+
 /flashcards <topic>
+
 /roadmap <career>
+
 /exam <subject>
+
 /practice <topic>
 
 /history
+
 /clearhistory
 
 📄 Upload PDF for AI Summary.
@@ -200,14 +218,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================================
-# GENERIC AI HANDLER
+# GENERIC AI COMMAND
 # =========================================
 
 async def ai_command(update, context, prompt_template, history_tag=None):
 
     try:
 
-        text = " ".join(context.args)
+        text = " ".join(context.args).strip()
 
         if not text:
 
@@ -260,9 +278,9 @@ Answer this educational question:
 {text}
 
 Requirements:
+- Beginner friendly
 - Easy explanation
 - Examples
-- Beginner friendly
 """,
         "ASK"
     )
@@ -328,7 +346,7 @@ async def roadmap(update, context):
         update,
         context,
         """
-Create roadmap for:
+Create learning roadmap for:
 
 {text}
 
@@ -454,10 +472,12 @@ async def handle_pdf(update, context):
 
         os.remove(pdf_path)
 
+        text = text[:12000]
+
         prompt = f"""
 Summarize this PDF:
 
-{text[:12000]}
+{text}
 
 Requirements:
 - Important concepts
@@ -561,11 +581,11 @@ def home():
 
 
 # =========================================
-# WEBHOOK ROUTE
+# WEBHOOK
 # =========================================
 
 @flask_app.route(f"/{BOT_TOKEN}", methods=["POST"])
-def webhook():
+async def webhook():
 
     try:
 
@@ -576,14 +596,7 @@ def webhook():
             telegram_app.bot
         )
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-        loop.run_until_complete(
-            telegram_app.process_update(update)
-        )
-
-        loop.close()
+        await telegram_app.process_update(update)
 
         return "ok", 200
 
@@ -622,9 +635,7 @@ async def startup():
 
 if __name__ == "__main__":
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(startup())
+    asyncio.run(startup())
 
     print("🤖 AI Study Assistant Running")
 
