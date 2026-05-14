@@ -584,8 +584,12 @@ def home():
 # WEBHOOK
 # =========================================
 
+# =========================================
+# WEBHOOK
+# =========================================
+
 @flask_app.route(f"/{BOT_TOKEN}", methods=["POST"])
-async def webhook():
+def webhook():
 
     try:
 
@@ -596,7 +600,9 @@ async def webhook():
             telegram_app.bot
         )
 
-        await telegram_app.process_update(update)
+        asyncio.run(
+            telegram_app.process_update(update)
+        )
 
         return "ok", 200
 
