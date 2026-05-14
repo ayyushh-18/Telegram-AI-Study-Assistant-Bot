@@ -565,7 +565,7 @@ def home():
 # =========================================
 
 @flask_app.route(f"/{BOT_TOKEN}", methods=["POST"])
-async def webhook():
+def webhook():
 
     try:
 
@@ -576,7 +576,14 @@ async def webhook():
             telegram_app.bot
         )
 
-        await telegram_app.process_update(update)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        loop.run_until_complete(
+            telegram_app.process_update(update)
+        )
+
+        loop.close()
 
         return "ok", 200
 
@@ -615,7 +622,9 @@ async def startup():
 
 if __name__ == "__main__":
 
-    asyncio.run(startup())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(startup())
 
     print("🤖 AI Study Assistant Running")
 
