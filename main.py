@@ -190,7 +190,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • MCQ Quiz Generator
 • Flashcards
 • Exam Preparation
-• Roadmaps
+• Career Roadmaps
 • Practice Tests
 • PDF Summary
 • History Tracking
@@ -376,6 +376,264 @@ Requirements:
 
 
 # =========================================
+# FLASHCARDS
+# =========================================
+
+async def flashcards(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    topic = " ".join(context.args)
+
+    if not topic:
+
+        await send_reply(
+            update,
+            "Usage:\n/flashcards DBMS"
+        )
+
+        return
+
+    try:
+
+        await typing_effect(update, context)
+
+        prompt = f"""
+Create flashcards for:
+
+{topic}
+
+Format:
+Q:
+A:
+"""
+
+        reply = generate_ai_response(prompt)
+
+        save_history(
+            str(update.effective_user.id),
+            "FLASHCARDS",
+            topic
+        )
+
+        await send_reply(update, reply)
+
+    except Exception as e:
+
+        logger.error(str(e))
+        traceback.print_exc()
+
+        await send_reply(
+            update,
+            "❌ AI service error."
+        )
+
+
+# =========================================
+# ROADMAP
+# =========================================
+
+async def roadmap(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    career = " ".join(context.args)
+
+    if not career:
+
+        await send_reply(
+            update,
+            "Usage:\n/roadmap Python Developer"
+        )
+
+        return
+
+    try:
+
+        await typing_effect(update, context)
+
+        prompt = f"""
+Create a roadmap for:
+
+{career}
+
+Include:
+- Skills
+- Learning order
+- Projects
+- Timeline
+- Resources
+"""
+
+        reply = generate_ai_response(prompt)
+
+        save_history(
+            str(update.effective_user.id),
+            "ROADMAP",
+            career
+        )
+
+        await send_reply(update, reply)
+
+    except Exception as e:
+
+        logger.error(str(e))
+        traceback.print_exc()
+
+        await send_reply(
+            update,
+            "❌ AI service error."
+        )
+
+
+# =========================================
+# EXAM
+# =========================================
+
+async def exam(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    subject = " ".join(context.args)
+
+    if not subject:
+
+        await send_reply(
+            update,
+            "Usage:\n/exam DBMS"
+        )
+
+        return
+
+    try:
+
+        await typing_effect(update, context)
+
+        prompt = f"""
+Create exam preparation notes for:
+
+{subject}
+
+Include:
+- Important questions
+- Viva questions
+- Key concepts
+- Revision notes
+"""
+
+        reply = generate_ai_response(prompt)
+
+        save_history(
+            str(update.effective_user.id),
+            "EXAM",
+            subject
+        )
+
+        await send_reply(update, reply)
+
+    except Exception as e:
+
+        logger.error(str(e))
+        traceback.print_exc()
+
+        await send_reply(
+            update,
+            "❌ AI service error."
+        )
+
+
+# =========================================
+# PRACTICE
+# =========================================
+
+async def practice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    topic = " ".join(context.args)
+
+    if not topic:
+
+        await send_reply(
+            update,
+            "Usage:\n/practice Python"
+        )
+
+        return
+
+    try:
+
+        await typing_effect(update, context)
+
+        prompt = f"""
+Generate a practice test on:
+
+{topic}
+
+Requirements:
+- 20 MCQs
+- Correct answers
+- Mixed difficulty
+"""
+
+        reply = generate_ai_response(prompt)
+
+        save_history(
+            str(update.effective_user.id),
+            "PRACTICE",
+            topic
+        )
+
+        await send_reply(update, reply)
+
+    except Exception as e:
+
+        logger.error(str(e))
+        traceback.print_exc()
+
+        await send_reply(
+            update,
+            "❌ AI service error."
+        )
+
+
+# =========================================
+# HISTORY
+# =========================================
+
+async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    records = get_history(
+        str(update.effective_user.id)
+    )
+
+    if not records:
+
+        await send_reply(
+            update,
+            "No history found."
+        )
+
+        return
+
+    text = "📜 Recent History:\n\n"
+
+    for command, content in records:
+
+        text += f"🔹 [{command}] {content}\n\n"
+
+    await send_reply(update, text)
+
+
+# =========================================
+# CLEAR HISTORY
+# =========================================
+
+async def clearhistory(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    clear_history(
+        str(update.effective_user.id)
+    )
+
+    await send_reply(
+        update,
+        "🗑️ History cleared."
+    )
+
+
+# =========================================
 # PDF HANDLER
 # =========================================
 
@@ -453,50 +711,6 @@ PDF Content:
 
 
 # =========================================
-# HISTORY
-# =========================================
-
-async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    records = get_history(
-        str(update.effective_user.id)
-    )
-
-    if not records:
-
-        await send_reply(
-            update,
-            "No history found."
-        )
-
-        return
-
-    text = "📜 Recent History:\n\n"
-
-    for command, content in records:
-
-        text += f"🔹 [{command}] {content}\n\n"
-
-    await send_reply(update, text)
-
-
-# =========================================
-# CLEAR HISTORY
-# =========================================
-
-async def clearhistory(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    clear_history(
-        str(update.effective_user.id)
-    )
-
-    await send_reply(
-        update,
-        "🗑️ History cleared."
-    )
-
-
-# =========================================
 # HANDLERS
 # =========================================
 
@@ -505,8 +719,12 @@ telegram_app.add_handler(CommandHandler("help", start))
 telegram_app.add_handler(CommandHandler("ask", ask))
 telegram_app.add_handler(CommandHandler("summarize", summarize))
 telegram_app.add_handler(CommandHandler("quiz", quiz))
+telegram_app.add_handler(CommandHandler("flashcards", flashcards))
+telegram_app.add_handler(CommandHandler("roadmap", roadmap))
 telegram_app.add_handler(CommandHandler("history", history))
 telegram_app.add_handler(CommandHandler("clearhistory", clearhistory))
+telegram_app.add_handler(CommandHandler("exam", exam))
+telegram_app.add_handler(CommandHandler("practice", practice))
 
 telegram_app.add_handler(
     MessageHandler(
@@ -571,7 +789,9 @@ async def startup():
         webhook_url
     )
 
-    logger.info(f"Webhook Set: {webhook_url}")
+    logger.info(
+        f"Webhook Set: {webhook_url}"
+    )
 
 
 # =========================================
