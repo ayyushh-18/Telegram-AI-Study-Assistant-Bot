@@ -61,9 +61,7 @@ if not GROQ_API_KEY:
 # GROQ CLIENT
 # =========================================
 
-client = Groq(
-    api_key=GROQ_API_KEY
-)
+client = Groq(api_key=GROQ_API_KEY)
 
 
 # =========================================
@@ -94,8 +92,6 @@ def clean_text(text):
     text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)
     text = re.sub(r"#{1,6}", "", text)
     text = re.sub(r"```", "", text)
-    text = re.sub(r"---+", "", text)
-    text = re.sub(r"===+", "", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text.strip()
@@ -119,13 +115,13 @@ def generate_ai_response(prompt):
 You are an advanced AI Study Assistant.
 
 Rules:
-- Telegram-friendly formatting
+- Telegram friendly formatting
 - No markdown stars
-- No unnecessary symbols
-- Use clean bullet points
+- Easy explanations
+- Use bullets
 - Use emojis naturally
+- Beginner friendly
 - Educational tone
-- Detailed but readable answers
 """
             },
 
@@ -137,7 +133,7 @@ Rules:
         ],
 
         temperature=0.7,
-        max_tokens=4000
+        max_tokens=3000
 
     )
 
@@ -152,9 +148,9 @@ Rules:
 
 async def send_reply(update, text):
 
-    MAX_LENGTH = 4000
-
     text = clean_text(text)
+
+    MAX_LENGTH = 4000
 
     for i in range(0, len(text), MAX_LENGTH):
 
@@ -182,32 +178,21 @@ async def typing_effect(update, context):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = """
-🤖 AI Study Assistant Bot
+🧠 AI Study Assistant Bot
 
-📚 Features:
-• AI Question Solving
-• Notes Summary
-• MCQ Quiz Generator
-• Flashcards
-• Exam Preparation
-• Career Roadmaps
-• Practice Tests
-• PDF Summary
-• History Tracking
+📚 Commands:
 
-# 🧠 Commands:
+/ask <question>
+/summarize <notes>
+/quiz <topic>
+/flashcards <topic>
+/roadmap <career>
+/history
+/clearhistory
+/exam <subject>
+/practice <topic>
 
-# /ask <question>
-# /summarize <notes>
-# /quiz <topic>
-# /flashcards <topic>
-# /roadmap <career>
-# /history
-# /clearhistory
-# /exam <subject>
-# /practice <topic>
-
-# 📄 Upload PDF for AI Summary.
+📄 Upload PDF for AI Summary.
 """
 
     await send_reply(update, text)
@@ -225,7 +210,7 @@ async def ask(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await send_reply(
             update,
-            "Usage:\n/ask What is DBMS?"
+            "Usage:\n/ask What is AI?"
         )
 
         return
@@ -241,9 +226,9 @@ Answer this educational question:
 
 Requirements:
 - Easy explanation
-- Examples
 - Bullet points
-- Beginner-friendly
+- Examples
+- Beginner friendly
 """
 
         reply = generate_ai_response(prompt)
@@ -289,16 +274,14 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await typing_effect(update, context)
 
         prompt = f"""
-Summarize these notes.
+Summarize these notes:
+
+{notes}
 
 Requirements:
-- Short bullet points
-- Important concepts
-- Easy revision format
-- Beginner-friendly
-
-Notes:
-{notes}
+- Short notes
+- Bullet points
+- Revision format
 """
 
         reply = generate_ai_response(prompt)
@@ -314,7 +297,6 @@ Notes:
     except Exception as e:
 
         logger.error(str(e))
-        traceback.print_exc()
 
         await send_reply(
             update,
@@ -334,7 +316,7 @@ async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await send_reply(
             update,
-            "Usage:\n/quiz DBMS"
+            "Usage:\n/quiz Python"
         )
 
         return
@@ -348,26 +330,19 @@ Generate 10 MCQs on:
 
 {topic}
 
-Requirements:
+Include:
 - 4 options
 - Correct answers
-- Short explanations
+- Explanations
 """
 
         reply = generate_ai_response(prompt)
-
-        save_history(
-            str(update.effective_user.id),
-            "QUIZ",
-            topic
-        )
 
         await send_reply(update, reply)
 
     except Exception as e:
 
         logger.error(str(e))
-        traceback.print_exc()
 
         await send_reply(
             update,
@@ -408,18 +383,11 @@ A:
 
         reply = generate_ai_response(prompt)
 
-        save_history(
-            str(update.effective_user.id),
-            "FLASHCARDS",
-            topic
-        )
-
         await send_reply(update, reply)
 
     except Exception as e:
 
         logger.error(str(e))
-        traceback.print_exc()
 
         await send_reply(
             update,
@@ -439,7 +407,7 @@ async def roadmap(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await send_reply(
             update,
-            "Usage:\n/roadmap Python Developer"
+            "Usage:\n/roadmap Web Developer"
         )
 
         return
@@ -455,26 +423,18 @@ Create a roadmap for:
 
 Include:
 - Skills
-- Learning order
-- Projects
 - Timeline
+- Projects
 - Resources
 """
 
         reply = generate_ai_response(prompt)
-
-        save_history(
-            str(update.effective_user.id),
-            "ROADMAP",
-            career
-        )
 
         await send_reply(update, reply)
 
     except Exception as e:
 
         logger.error(str(e))
-        traceback.print_exc()
 
         await send_reply(
             update,
@@ -510,25 +470,18 @@ Create exam preparation notes for:
 
 Include:
 - Important questions
-- Viva questions
 - Key concepts
+- Viva questions
 - Revision notes
 """
 
         reply = generate_ai_response(prompt)
-
-        save_history(
-            str(update.effective_user.id),
-            "EXAM",
-            subject
-        )
 
         await send_reply(update, reply)
 
     except Exception as e:
 
         logger.error(str(e))
-        traceback.print_exc()
 
         await send_reply(
             update,
@@ -558,30 +511,23 @@ async def practice(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await typing_effect(update, context)
 
         prompt = f"""
-Generate a practice test on:
+Generate practice questions on:
 
 {topic}
 
-Requirements:
-- 20 MCQs
-- Correct answers
+Include:
+- MCQs
+- Answers
 - Mixed difficulty
 """
 
         reply = generate_ai_response(prompt)
-
-        save_history(
-            str(update.effective_user.id),
-            "PRACTICE",
-            topic
-        )
 
         await send_reply(update, reply)
 
     except Exception as e:
 
         logger.error(str(e))
-        traceback.print_exc()
 
         await send_reply(
             update,
@@ -634,7 +580,7 @@ async def clearhistory(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================================
-# PDF HANDLER
+# PDF SUMMARY
 # =========================================
 
 async def handle_pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -648,15 +594,6 @@ async def handle_pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         document = update.message.document
 
-        if document.mime_type != "application/pdf":
-
-            await send_reply(
-                update,
-                "Please upload a valid PDF."
-            )
-
-            return
-
         file = await context.bot.get_file(
             document.file_id
         )
@@ -665,9 +602,9 @@ async def handle_pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await file.download_to_drive(pdf_path)
 
-        text = ""
-
         pdf = fitz.open(pdf_path)
+
+        text = ""
 
         for page in pdf:
             text += page.get_text()
@@ -677,25 +614,17 @@ async def handle_pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
         os.remove(pdf_path)
 
         prompt = f"""
-Summarize these PDF notes.
+Summarize this PDF:
+
+{text[:12000]}
 
 Requirements:
-- Important concepts
 - Bullet points
+- Important concepts
 - Revision notes
-- Easy language
-
-PDF Content:
-{text[:12000]}
 """
 
         reply = generate_ai_response(prompt)
-
-        save_history(
-            str(update.effective_user.id),
-            "PDF_SUMMARY",
-            document.file_name
-        )
 
         await send_reply(update, reply)
 
@@ -706,7 +635,42 @@ PDF Content:
 
         await send_reply(
             update,
-            "❌ PDF processing error."
+            "❌ PDF processing failed."
+        )
+
+
+# =========================================
+# NORMAL AI CHAT
+# =========================================
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    try:
+
+        text = update.message.text
+
+        if not text:
+            return
+
+        await typing_effect(update, context)
+
+        prompt = f"""
+Answer this educational question:
+
+{text}
+"""
+
+        reply = generate_ai_response(prompt)
+
+        await send_reply(update, reply)
+
+    except Exception as e:
+
+        logger.error(str(e))
+
+        await send_reply(
+            update,
+            "❌ AI service error."
         )
 
 
@@ -733,6 +697,13 @@ telegram_app.add_handler(
     )
 )
 
+telegram_app.add_handler(
+    MessageHandler(
+        filters.TEXT & ~filters.COMMAND,
+        handle_message
+    )
+)
+
 
 # =========================================
 # FLASK ROUTES
@@ -748,7 +719,7 @@ def home():
 
 
 @flask_app.route(f"/{BOT_TOKEN}", methods=["POST"])
-async def webhook():
+def webhook():
 
     try:
 
@@ -759,7 +730,9 @@ async def webhook():
             telegram_app.bot
         )
 
-        await telegram_app.process_update(update)
+        asyncio.run(
+            telegram_app.process_update(update)
+        )
 
         return "ok", 200
 
