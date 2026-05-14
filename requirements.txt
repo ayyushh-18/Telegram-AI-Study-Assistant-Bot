@@ -1,5 +1,5 @@
-python-telegram-bot
-flask
 groq
+python-telegram-bot
 python-dotenv
 PyMuPDF
+Flask[async]
