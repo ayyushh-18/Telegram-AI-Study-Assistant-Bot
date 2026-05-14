@@ -581,8 +581,12 @@ def home():
 
 
 # =========================================
-# WEBHOOK
+# GLOBAL EVENT LOOP
 # =========================================
+
+main_loop = asyncio.new_event_loop()
+asyncio.set_event_loop(main_loop)
+
 
 # =========================================
 # WEBHOOK
@@ -600,7 +604,7 @@ def webhook():
             telegram_app.bot
         )
 
-        asyncio.run(
+        main_loop.run_until_complete(
             telegram_app.process_update(update)
         )
 
@@ -641,7 +645,9 @@ async def startup():
 
 if __name__ == "__main__":
 
-    asyncio.run(startup())
+    main_loop.run_until_complete(
+        startup()
+    )
 
     print("🤖 AI Study Assistant Running")
 
@@ -652,5 +658,6 @@ if __name__ == "__main__":
     flask_app.run(
         host="0.0.0.0",
         port=port,
-        debug=False
+        debug=False,
+        threaded=True
     )
