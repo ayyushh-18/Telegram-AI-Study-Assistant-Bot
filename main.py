@@ -133,7 +133,7 @@ Rules:
         ],
 
         temperature=0.7,
-        max_tokens=3000
+        max_tokens=2500
 
     )
 
@@ -160,7 +160,7 @@ async def send_reply(update, text):
 
 
 # =========================================
-# TYPING EFFECT
+# TYPING
 # =========================================
 
 async def typing_effect(update, context):
@@ -180,17 +180,18 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = """
 🧠 AI Study Assistant Bot
 
-📚 Commands:
+📚 Available Commands:
 
 /ask <question>
 /summarize <notes>
 /quiz <topic>
 /flashcards <topic>
 /roadmap <career>
-/history
-/clearhistory
 /exam <subject>
 /practice <topic>
+
+/history
+/clearhistory
 
 📄 Upload PDF for AI Summary.
 """
@@ -199,45 +200,37 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================================
-# ASK
+# GENERIC AI HANDLER
 # =========================================
 
-async def ask(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    question = " ".join(context.args)
-
-    if not question:
-
-        await send_reply(
-            update,
-            "Usage:\n/ask What is AI?"
-        )
-
-        return
+async def ai_command(update, context, prompt_template, history_tag=None):
 
     try:
 
+        text = " ".join(context.args)
+
+        if not text:
+
+            await send_reply(
+                update,
+                "❌ Please provide input."
+            )
+
+            return
+
         await typing_effect(update, context)
 
-        prompt = f"""
-Answer this educational question:
-
-{question}
-
-Requirements:
-- Easy explanation
-- Bullet points
-- Examples
-- Beginner friendly
-"""
+        prompt = prompt_template.format(text=text)
 
         reply = generate_ai_response(prompt)
 
-        save_history(
-            str(update.effective_user.id),
-            "ASK",
-            question
-        )
+        if history_tag:
+
+            save_history(
+                str(update.effective_user.id),
+                history_tag,
+                text
+            )
 
         await send_reply(update, reply)
 
@@ -253,293 +246,141 @@ Requirements:
 
 
 # =========================================
-# SUMMARIZE
+# COMMANDS
 # =========================================
 
-async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ask(update, context):
 
-    notes = " ".join(context.args)
+    await ai_command(
+        update,
+        context,
+        """
+Answer this educational question:
 
-    if not notes:
+{text}
 
-        await send_reply(
-            update,
-            "Usage:\n/summarize your notes"
-        )
+Requirements:
+- Easy explanation
+- Examples
+- Beginner friendly
+""",
+        "ASK"
+    )
 
-        return
 
-    try:
+async def summarize(update, context):
 
-        await typing_effect(update, context)
-
-        prompt = f"""
+    await ai_command(
+        update,
+        context,
+        """
 Summarize these notes:
 
-{notes}
+{text}
 
 Requirements:
 - Short notes
 - Bullet points
 - Revision format
-"""
-
-        reply = generate_ai_response(prompt)
-
-        save_history(
-            str(update.effective_user.id),
-            "SUMMARIZE",
-            notes
-        )
-
-        await send_reply(update, reply)
-
-    except Exception as e:
-
-        logger.error(str(e))
-
-        await send_reply(
-            update,
-            "❌ AI service error."
-        )
+""",
+        "SUMMARIZE"
+    )
 
 
-# =========================================
-# QUIZ
-# =========================================
+async def quiz(update, context):
 
-async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    topic = " ".join(context.args)
-
-    if not topic:
-
-        await send_reply(
-            update,
-            "Usage:\n/quiz Python"
-        )
-
-        return
-
-    try:
-
-        await typing_effect(update, context)
-
-        prompt = f"""
+    await ai_command(
+        update,
+        context,
+        """
 Generate 10 MCQs on:
 
-{topic}
+{text}
 
 Include:
-- 4 options
+- Options
 - Correct answers
 - Explanations
 """
-
-        reply = generate_ai_response(prompt)
-
-        await send_reply(update, reply)
-
-    except Exception as e:
-
-        logger.error(str(e))
-
-        await send_reply(
-            update,
-            "❌ AI service error."
-        )
+    )
 
 
-# =========================================
-# FLASHCARDS
-# =========================================
+async def flashcards(update, context):
 
-async def flashcards(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    topic = " ".join(context.args)
-
-    if not topic:
-
-        await send_reply(
-            update,
-            "Usage:\n/flashcards DBMS"
-        )
-
-        return
-
-    try:
-
-        await typing_effect(update, context)
-
-        prompt = f"""
+    await ai_command(
+        update,
+        context,
+        """
 Create flashcards for:
 
-{topic}
+{text}
 
 Format:
 Q:
 A:
 """
-
-        reply = generate_ai_response(prompt)
-
-        await send_reply(update, reply)
-
-    except Exception as e:
-
-        logger.error(str(e))
-
-        await send_reply(
-            update,
-            "❌ AI service error."
-        )
+    )
 
 
-# =========================================
-# ROADMAP
-# =========================================
+async def roadmap(update, context):
 
-async def roadmap(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await ai_command(
+        update,
+        context,
+        """
+Create roadmap for:
 
-    career = " ".join(context.args)
-
-    if not career:
-
-        await send_reply(
-            update,
-            "Usage:\n/roadmap Web Developer"
-        )
-
-        return
-
-    try:
-
-        await typing_effect(update, context)
-
-        prompt = f"""
-Create a roadmap for:
-
-{career}
+{text}
 
 Include:
 - Skills
 - Timeline
 - Projects
-- Resources
 """
-
-        reply = generate_ai_response(prompt)
-
-        await send_reply(update, reply)
-
-    except Exception as e:
-
-        logger.error(str(e))
-
-        await send_reply(
-            update,
-            "❌ AI service error."
-        )
+    )
 
 
-# =========================================
-# EXAM
-# =========================================
+async def exam(update, context):
 
-async def exam(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    subject = " ".join(context.args)
-
-    if not subject:
-
-        await send_reply(
-            update,
-            "Usage:\n/exam DBMS"
-        )
-
-        return
-
-    try:
-
-        await typing_effect(update, context)
-
-        prompt = f"""
+    await ai_command(
+        update,
+        context,
+        """
 Create exam preparation notes for:
 
-{subject}
+{text}
 
 Include:
 - Important questions
 - Key concepts
-- Viva questions
 - Revision notes
 """
-
-        reply = generate_ai_response(prompt)
-
-        await send_reply(update, reply)
-
-    except Exception as e:
-
-        logger.error(str(e))
-
-        await send_reply(
-            update,
-            "❌ AI service error."
-        )
+    )
 
 
-# =========================================
-# PRACTICE
-# =========================================
+async def practice(update, context):
 
-async def practice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    topic = " ".join(context.args)
-
-    if not topic:
-
-        await send_reply(
-            update,
-            "Usage:\n/practice Python"
-        )
-
-        return
-
-    try:
-
-        await typing_effect(update, context)
-
-        prompt = f"""
+    await ai_command(
+        update,
+        context,
+        """
 Generate practice questions on:
 
-{topic}
+{text}
 
 Include:
 - MCQs
 - Answers
 - Mixed difficulty
 """
-
-        reply = generate_ai_response(prompt)
-
-        await send_reply(update, reply)
-
-    except Exception as e:
-
-        logger.error(str(e))
-
-        await send_reply(
-            update,
-            "❌ AI service error."
-        )
+    )
 
 
 # =========================================
 # HISTORY
 # =========================================
 
-async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def history(update, context):
 
     records = get_history(
         str(update.effective_user.id)
@@ -567,7 +408,7 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # CLEAR HISTORY
 # =========================================
 
-async def clearhistory(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def clearhistory(update, context):
 
     clear_history(
         str(update.effective_user.id)
@@ -580,10 +421,10 @@ async def clearhistory(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================================
-# PDF SUMMARY
+# PDF HANDLER
 # =========================================
 
-async def handle_pdf(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_pdf(update, context):
 
     try:
 
@@ -619,8 +460,8 @@ Summarize this PDF:
 {text[:12000]}
 
 Requirements:
-- Bullet points
 - Important concepts
+- Bullet points
 - Revision notes
 """
 
@@ -640,10 +481,10 @@ Requirements:
 
 
 # =========================================
-# NORMAL AI CHAT
+# NORMAL CHAT
 # =========================================
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(update, context):
 
     try:
 
@@ -667,6 +508,7 @@ Answer this educational question:
     except Exception as e:
 
         logger.error(str(e))
+        traceback.print_exc()
 
         await send_reply(
             update,
@@ -675,7 +517,7 @@ Answer this educational question:
 
 
 # =========================================
-# HANDLERS
+# REGISTER HANDLERS
 # =========================================
 
 telegram_app.add_handler(CommandHandler("start", start))
@@ -685,10 +527,10 @@ telegram_app.add_handler(CommandHandler("summarize", summarize))
 telegram_app.add_handler(CommandHandler("quiz", quiz))
 telegram_app.add_handler(CommandHandler("flashcards", flashcards))
 telegram_app.add_handler(CommandHandler("roadmap", roadmap))
-telegram_app.add_handler(CommandHandler("history", history))
-telegram_app.add_handler(CommandHandler("clearhistory", clearhistory))
 telegram_app.add_handler(CommandHandler("exam", exam))
 telegram_app.add_handler(CommandHandler("practice", practice))
+telegram_app.add_handler(CommandHandler("history", history))
+telegram_app.add_handler(CommandHandler("clearhistory", clearhistory))
 
 telegram_app.add_handler(
     MessageHandler(
@@ -706,7 +548,7 @@ telegram_app.add_handler(
 
 
 # =========================================
-# FLASK ROUTES
+# HOME ROUTE
 # =========================================
 
 @flask_app.route("/")
@@ -714,12 +556,16 @@ def home():
 
     return jsonify({
         "status": "running",
-        "bot": "AI Study Assistant Bot"
+        "bot": "AI Study Assistant"
     })
 
 
+# =========================================
+# WEBHOOK ROUTE
+# =========================================
+
 @flask_app.route(f"/{BOT_TOKEN}", methods=["POST"])
-def webhook():
+async def webhook():
 
     try:
 
@@ -730,9 +576,7 @@ def webhook():
             telegram_app.bot
         )
 
-        asyncio.run(
-            telegram_app.process_update(update)
-        )
+        await telegram_app.process_update(update)
 
         return "ok", 200
 
@@ -773,7 +617,7 @@ if __name__ == "__main__":
 
     asyncio.run(startup())
 
-    print("🤖 Bot Running Successfully")
+    print("🤖 AI Study Assistant Running")
 
     port = int(
         os.environ.get("PORT", 10000)
