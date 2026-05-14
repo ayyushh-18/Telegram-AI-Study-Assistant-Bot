@@ -195,19 +195,19 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • PDF Summary
 • History Tracking
 
-🧠 Commands:
+# 🧠 Commands:
 
-/ask <question>
-/summarize <notes>
-/quiz <topic>
-/flashcards <topic>
-/roadmap <career>
-/history
-/clearhistory
-/exam <subject>
-/practice <topic>
+# /ask <question>
+# /summarize <notes>
+# /quiz <topic>
+# /flashcards <topic>
+# /roadmap <career>
+# /history
+# /clearhistory
+# /exam <subject>
+# /practice <topic>
 
-📄 Upload PDF for AI Summary.
+# 📄 Upload PDF for AI Summary.
 """
 
     await send_reply(update, text)
@@ -748,7 +748,7 @@ def home():
 
 
 @flask_app.route(f"/{BOT_TOKEN}", methods=["POST"])
-def webhook():
+async def webhook():
 
     try:
 
@@ -759,9 +759,7 @@ def webhook():
             telegram_app.bot
         )
 
-        asyncio.run(
-            telegram_app.process_update(update)
-        )
+        await telegram_app.process_update(update)
 
         return "ok", 200
 
