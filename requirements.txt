@@ -1,4 +1,5 @@
-groq
 python-telegram-bot
+flask
+groq
 python-dotenv
 PyMuPDF
