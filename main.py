@@ -161,7 +161,7 @@ async def send_reply(update, text):
 
     text = clean_text(text)
 
-    MAX_LENGTH = 4000
+    MAX_LENGTH = 6000
 
     for i in range(0, len(text), MAX_LENGTH):
 
